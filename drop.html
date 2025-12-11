@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Searchable Dropdown</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      font-family: Arial, sans-serif;
+    }
+    
+    body {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      margin: 0;
+      padding: 20px;
+      background-color: #f5f5f5;
+    }
+    
+    .dropdown-container {
+      position: relative;
+      width: 300px;
+      max-width: 100%;
+    }
+    
+    .dropdown-button {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      width: 100%;
+      padding: 12px 16px;
+      background-color: white;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 16px;
+    }
+    
+    .dropdown-button:hover {
+      border-color: #aaa;
+    }
+    
+    .dropdown-button:focus {
+      outline: none;
+      border-color: #4d90fe;
+      box-shadow: 0 0 0 2px rgba(77, 144, 254, 0.2);
+    }
+    
+    .dropdown-icon {
+      border: solid #666;
+      border-width: 0 2px 2px 0;
+      display: inline-block;
+      padding: 3px;
+      transform: rotate(45deg);
+      transition: transform 0.2s;
+    }
+    
+    .dropdown-content {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      right: 0;
+      margin-top: 5px;
+      max-height: 250px;
+      overflow-y: auto;
+      background-color: white;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      z-index: 1;
+      display: none;
+    }
+    
+    .dropdown-content.show {
+      display: block;
+    }
+    
+    .search-box {
+      width: 100%;
+      padding: 10px 12px;
+      border: none;
+      border-bottom: 1px solid #eee;
+      font-size: 14px;
+    }
+    
+    .search-box:focus {
+      outline: none;
+      border-bottom-color: #4d90fe;
+    }
+    
+    .dropdown-items {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+    
+    .dropdown-item {
+      padding: 10px 16px;
+      cursor: pointer;
+    }
+    
+    .dropdown-item:hover {
+      background-color: #f5f5f5;
+    }
+    
+    .dropdown-item.selected {
+      background-color: #e6f0ff;
+      font-weight: bold;
+    }
+    
+    .no-results {
+      padding: 10px 16px;
+      color: #666;
+      font-style: italic;
+    }
+  </style>
+</head>
+<body>
+  <div class="dropdown-container">
+    <button type="button" class="dropdown-button" id="dropdown">
+      <span id="dropdown-text">Select an option</span>
+      <span class="dropdown-icon"></span>
+    </button>
+    <div class="dropdown-content" id="dropdown-content">
+      <input type="text" class="search-box" id="search-box" placeholder="Search...">
+      <ul class="dropdown-items" id="dropdown-items">
+        <li class="dropdown-item" data-value="apple">Apple</li>
+        <li class="dropdown-item" data-value="banana">Banana</li>
+        <li class="dropdown-item" data-value="cherry">Cherry</li>
+        <li class="dropdown-item" data-value="date">Date</li>
+        <li class="dropdown-item" data-value="elderberry">Elderberry</li>
+        <li class="dropdown-item" data-value="fig">Fig</li>
+        <li class="dropdown-item" data-value="grape">Grape</li>
+        <li class="dropdown-item" data-value="honeydew">Honeydew</li>
+        <li class="dropdown-item" data-value="kiwi">Kiwi</li>
+        <li class="dropdown-item" data-value="lemon">Lemon</li>
+        <li class="dropdown-item" data-value="mango">Mango</li>
+        <li class="dropdown-item" data-value="nectarine">Nectarine</li>
+        <li class="dropdown-item" data-value="orange">Orange</li>
+        <li class="dropdown-item" data-value="pineapple">Pineapple</li>
+      </ul>
+      <div class="no-results" id="no-results" style="display: none;">No matching options found</div>
+    </div>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const dropdown = document.getElementById('dropdown');
+      const dropdownContent = document.getElementById('dropdown-content');
+      const dropdownText = document.getElementById('dropdown-text');
+      const searchBox = document.getElementById('search-box');
+      const dropdownItems = document.getElementById('dropdown-items');
+      const noResults = document.getElementById('no-results');
+      const items = dropdownItems.getElementsByClassName('dropdown-item');
+      
+      // Toggle dropdown
+      dropdown.addEventListener('click', function() {
+        dropdownContent.classList.toggle('show');
+        if (dropdownContent.classList.contains('show')) {
+          searchBox.focus();
+          dropdown.querySelector('.dropdown-icon').style.transform = 'rotate(-135deg)';
+        } else {
+          dropdown.querySelector('.dropdown-icon').style.transform = 'rotate(45deg)';
+        }
+      });
+      
+      // Close dropdown when clicking outside
+      window.addEventListener('click', function(event) {
+        if (!event.target.matches('.dropdown-button') && !event.target.matches('.dropdown-icon') && 
+            !dropdownContent.contains(event.target)) {
+          dropdownContent.classList.remove('show');
+          dropdown.querySelector('.dropdown-icon').style.transform = 'rotate(45deg)';
+        }
+      });
+      
+      // Search functionality
+      searchBox.addEventListener('input', function() {
+        const searchValue = this.value.toLowerCase();
+        let hasVisibleItems = false;
+        
+        for (let item of items) {
+          const text = item.textContent.toLowerCase();
+          if (text.includes(searchValue)) {
+            item.style.display = '';
+            hasVisibleItems = true;
+          } else {
+            item.style.display = 'none';
+          }
+        }
+        
+        // Show/hide no results message
+        noResults.style.display = hasVisibleItems ? 'none' : 'block';
+      });
+      
+      // Select item
+      for (let item of items) {
+        item.addEventListener('click', function() {
+          dropdownText.textContent = this.textContent;
+          dropdownContent.classList.remove('show');
+          dropdown.querySelector('.dropdown-icon').style.transform = 'rotate(45deg)';
+          
+          // Remove selected class from all items
+          for (let i of items) {
+            i.classList.remove('selected');
+          }
+          
+          // Add selected class to clicked item
+          this.classList.add('selected');
+          
+          // Clear search
+          searchBox.value = '';
+          // Reset visibility of all items
+          for (let i of items) {
+            i.style.display = '';
+          }
+          noResults.style.display = 'none';
+          
+          // You can access the selected value with this.dataset.value
+          console.log('Selected value:', this.dataset.value);
+        });
+      }
+    });
+  </script>
+</body>
+</html>
+            <p id="plantDescription" style="color: var(--light-text); margin-bottom: 18px; line-height: 1.5; text-align: center;">No plant selected</p>
+
+
+              <ul style="list-style: none; padding: 0; display: flex; flex-direction: column; align-items: center;">
+                <li style="margin-bottom: 12px; display: flex; align-items: center;">
+                  <i class="fas fa-tint" style="color: #3182ce; width: 24px; margin-right: 10px;"></i> 
+                  <div>
+                    <strong style="color: var(--dark-text);">Water:</strong> 
+                    <span id="waterNeeds" style="margin-left: 5px;">--</span>
+                  </div>
+                </li>
+                <li style="margin-bottom: 12px; display: flex; align-items: center;">
+                  <i class="fas fa-sun" style="color: #ecc94b; width: 24px; margin-right: 10px;"></i> 
+                  <div>
+                    <strong style="color: var(--dark-text);">Light:</strong> 
+                    <span id="lightNeeds" style="margin-left: 5px;">--</span>
+                  </div>
+                </li>
+                <li style="margin-bottom: 12px; display: flex; align-items: center;">
+                  <i class="fas fa-thermometer-half" style="color: #dd6b20; width: 24px; margin-right: 10px;"></i> 
+                  <div>
+                    <strong style="color: var(--dark-text);">Temperature:</strong> 
+                    <span id="tempNeeds" style="margin-left: 5px;">--</span>
+                  </div>
+                </li>
+                <li style="margin-bottom: 12px; display: flex; align-items: center;">
+                  <i class="fas fa-flask" style="color: #805ad5; width: 24px; margin-right: 10px;"></i> 
+                  <div>
+                    <strong style="color: var(--dark-text);">Soil pH:</strong> 
+                    <span id="pHNeeds" style="margin-left: 5px;">--</span>
+                  </div>
+                </li>
+              </ul>
+            </div>

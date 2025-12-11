@@ -1,0 +1,823 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="description" content="Smart Plant Monitor Analysis Dashboard - Track your plant's data over time">
+  <title>🌱 Plant Analysis</title>
+
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+
+  <!-- Chart.js for data visualization -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+  
+  <!-- Font Awesome for icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <!-- Stylish Google Font -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --primary-color: #2f855a;
+      --secondary-color: #38a169;
+      --accent-color: #3182ce;
+      --light-bg: #f7fafc;
+      --dark-text: #2d3748;
+      --light-text: #718096;
+      --danger-color: #e53e3e;
+      --warning-color: #dd6b20;
+      --success-color: #38a169;
+      --border-color: #e2e8f0;
+      --card-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+      --gradient-start: #d4fc79;
+      --gradient-end: #96e6a1;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Inter', sans-serif;
+    }
+
+    body {
+      background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 800px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .header {
+      width: 100%;
+      max-width: 800px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      background: rgba(255, 255, 255, 0.95);
+      padding: 18px 25px;
+      border-radius: 16px;
+      box-shadow: var(--card-shadow);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      text-align: center;
+    }
+
+    .header h1 {
+      color: var(--primary-color);
+      font-size: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      font-weight: 700;
+      margin: 0 auto;
+    }
+
+    .user-controls {
+      display: flex;
+      gap: 18px;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .user-info {
+      text-align: center;
+      font-size: 14px;
+    }
+
+    .user-info span {
+      display: block;
+      color: var(--light-text);
+    }
+
+    .user-name {
+      font-weight: 600;
+      color: var(--dark-text);
+    }
+
+    .logout-btn {
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      color: var(--light-text);
+      font-size: 14px;
+      padding: 8px 12px;
+      border-radius: 8px;
+      border: 1px solid var(--border-color);
+      transition: all 0.3s ease;
+    }
+
+    .logout-btn:hover {
+      background: #f1f5f9;
+      color: var(--danger-color);
+      transform: translateY(-2px);
+    }
+
+    .dashboard-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 24px;
+      width: 100%;
+      max-width: 800px;
+      margin-bottom: 30px;
+      justify-content: center;
+    }
+
+    .dashboard-card {
+      background: #ffffff;
+      padding: 28px;
+      border-radius: 20px;
+      box-shadow: var(--card-shadow);
+      flex: 1;
+      min-width: 300px;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+      text-align: center;
+    }
+
+    .dashboard-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 15px 30px rgba(0, 0, 0, 0.15);
+    }
+
+    .card-header {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin-bottom: 20px;
+      gap: 15px;
+    }
+
+    .card-header h2 {
+      font-size: 20px;
+      color: var(--dark-text);
+      font-weight: 700;
+    }
+
+    .card-icon {
+      font-size: 22px;
+      color: var(--primary-color);
+      background: #e6fffa;
+      width: 48px;
+      height: 48px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      box-shadow: 0 5px 15px rgba(56, 161, 105, 0.2);
+    }
+
+    .chart-container {
+      height: 220px;
+      margin: 20px auto;
+      width: 100%;
+    }
+
+    .controls {
+      margin-top: 25px;
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .control-btn {
+      background: var(--primary-color);
+      color: white;
+      border: none;
+      padding: 10px 18px;
+      border-radius: 10px;
+      font-size: 15px;
+      font-weight: 500;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 10px rgba(47, 133, 90, 0.2);
+    }
+
+    .control-btn:hover {
+      background: var(--secondary-color);
+      transform: translateY(-3px);
+      box-shadow: 0 6px 15px rgba(47, 133, 90, 0.3);
+    }
+
+    .control-btn.secondary {
+      background: white;
+      color: var(--primary-color);
+      border: 1px solid var(--primary-color);
+      box-shadow: none;
+    }
+
+    .control-btn.secondary:hover {
+      background: #f0fff4;
+      transform: translateY(-3px);
+      box-shadow: 0 4px 10px rgba(47, 133, 90, 0.1);
+    }
+
+    .tab-container {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 25px;
+      width: 100%;
+      max-width: 800px;
+      justify-content: center;
+    }
+
+    .tab-btn {
+      padding: 12px 24px;
+      background: rgba(255, 255, 255, 0.8);
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--light-text);
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+    }
+
+    .tab-btn.active {
+      background: white;
+      color: var(--primary-color);
+      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+      transform: translateY(-3px);
+    }
+
+    .tab-btn:hover:not(.active) {
+      transform: translateY(-2px);
+    }
+
+    .history-card {
+      width: 100%;
+    }
+
+    .device-selection {
+      margin: 20px auto 15px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 15px;
+      width: 100%;
+      flex-wrap: wrap;
+    }
+
+    .device-dropdown {
+      padding: 10px 15px;
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      font-size: 15px;
+      width: 220px;
+      background-color: white;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+      text-align: center;
+    }
+
+    .last-updated {
+      font-size: 13px;
+      color: var(--light-text);
+      margin-top: 15px;
+      text-align: center;
+      font-style: italic;
+      width: 100%;
+    }
+
+    .nav-container {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 25px;
+      width: 100%;
+      max-width: 800px;
+      justify-content: center;
+    }
+
+    .nav-btn {
+      padding: 12px 24px;
+      background: rgba(255, 255, 255, 0.8);
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--light-text);
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .nav-btn.active {
+      background: white;
+      color: var(--primary-color);
+      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+      transform: translateY(-3px);
+    }
+
+    .nav-btn:hover:not(.active) {
+      transform: translateY(-2px);
+    }
+
+    footer {
+      margin-top: 30px;
+      font-size: 14px;
+      color: var(--light-text);
+      text-align: center;
+      width: 100%;
+      padding: 15px 0;
+    }
+
+    #loadingIndicator {
+      display: none;
+      text-align: center;
+      padding: 30px;
+      color: var(--light-text);
+      background: rgba(255, 255, 255, 0.9);
+      border-radius: 16px;
+      box-shadow: var(--card-shadow);
+      max-width: 800px;
+      width: 100%;
+    }
+
+    .spinner {
+      border: 5px solid rgba(0, 0, 0, 0.1);
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      border-left-color: var(--primary-color);
+      animation: spin 1.2s linear infinite;
+      margin: 0 auto 20px;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    @media (max-width: 768px) {
+      .dashboard-container {
+        flex-direction: column;
+        align-items: center;
+      }
+      
+      .dashboard-card {
+        width: 100%;
+      }
+      
+      .header {
+        flex-direction: column;
+        text-align: center;
+        gap: 15px;
+        padding: 20px 15px;
+      }
+      
+      .user-controls {
+        width: 100%;
+        justify-content: center;
+      }
+      
+      .nav-container {
+        overflow-x: auto;
+        padding-bottom: 5px;
+        justify-content: center;
+      }
+      
+      .nav-btn {
+        white-space: nowrap;
+        padding: 10px 18px;
+      }
+      
+      .device-selection {
+        flex-direction: column;
+        align-items: center;
+      }
+      
+      .device-dropdown {
+        width: 90%;
+      }
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1><i class="fas fa-chart-line"></i> Plant Analysis</h1>
+      <div class="user-controls">
+        <div class="user-info">
+          <span class="user-name" id="userName">Loading...</span>
+          <span id="deviceName">Plant: </span>
+        </div>
+        <button id="logoutBtn" class="logout-btn" onclick="logout()">Logout</button>
+      </div>
+    </div>
+
+    <div class="nav-container">
+      <a href="centralized-dashboard_linked.html" class="nav-btn">
+        <i class="fas fa-leaf"></i> Dashboard
+      </a>
+      <a href="analysis.html" class="nav-btn active">
+        <i class="fas fa-chart-line"></i> Analysis
+      </a>
+      <a href="weather_app_linked.html" class="nav-btn">
+        <i class="fas fa-cloud-sun"></i> Weather
+      </a>
+    </div>
+
+    <div id="loadingIndicator">
+      <div class="spinner"></div>
+      <p>Loading analysis data...</p>
+    </div>
+
+    <div class="device-selection">
+      <select id="deviceSelector" class="device-dropdown">
+        <option value="">Select a Plant...</option>
+      </select>
+    </div>
+
+    <div class="dashboard-container">
+      <div class="dashboard-card history-card">
+        <div class="card-header">
+          <div class="card-icon">
+            <i class="fas fa-history"></i>
+          </div>
+          <h2>Watering Intervals</h2>
+        </div>
+        <div class="chart-container">
+          <canvas id="wateringChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <div class="dashboard-container">
+      <div class="dashboard-card history-card">
+        <div class="card-header">
+          <div class="card-icon">
+            <i class="fas fa-tint"></i>
+          </div>
+          <h2>Moisture Content Over Time</h2>
+        </div>
+        <div class="chart-container">
+          <canvas id="moistureChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <div class="dashboard-container">
+      <div class="dashboard-card history-card">
+        <div class="card-header">
+          <div class="card-icon">
+            <i class="fas fa-sun"></i>
+          </div>
+          <h2>Light Intensity Over Time</h2>
+        </div>
+        <div class="chart-container">
+          <canvas id="lightChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <div class="last-updated">
+      Last updated: <span id="lastUpdated">--</span>
+    </div>
+  </div>
+
+  <script>
+    function logout() {
+      location.href = "newcsslogin_linked.html";
+    }
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyBv-b3ftdw08O9tf0gSFWeAyEBB0EJvQLo",
+      authDomain: "iot-project-9d263.firebaseapp.com",
+      databaseURL: "https://iot-project-9d263-default-rtdb.firebaseio.com",
+      projectId: "iot-project-9d263",
+      storageBucket: "iot-project-9d263.firebasestorage.app",
+      messagingSenderId: "600169469414",
+      appId: "1:600169469414:web:c796397351100a70ce7227",
+      measurementId: "G-BB0P86VPPL"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+    
+    // Get user information from localStorage
+    const userEmail = localStorage.getItem("user_email");
+    const userName = localStorage.getItem("user_name") || "User";
+    document.getElementById("userName").textContent = userName;
+    
+    // Default device
+    let currentDeviceId = "esp32_device_1";
+    document.getElementById("deviceName").textContent = `Plant: ${currentDeviceId}`;
+    
+    // Initialize charts
+    let wateringChart, moistureChart, lightChart;
+    
+    // Reference to Firebase database
+    const getDeviceRef = (deviceId) => {
+      return db.ref(`sensor_data/${userEmail}/${deviceId}`);
+    };
+    
+    // Show loading indicator
+    document.getElementById("loadingIndicator").style.display = "block";
+    
+    // Populate device selector dropdown
+    function populateDeviceSelector() {
+      const deviceSelector = document.getElementById("deviceSelector");
+      
+      // Clear existing options (keep the first placeholder)
+      while (deviceSelector.options.length > 1) {
+        deviceSelector.remove(1);
+      }
+      
+      // Get devices for this user
+      db.ref(`sensor_data/${userEmail}`).once("value", (snapshot) => {
+        const devices = snapshot.val();
+        if (devices) {
+          Object.keys(devices).forEach(deviceId => {
+            const option = document.createElement("option");
+            option.value = deviceId;
+            option.textContent = deviceId.replace(/_/g, " ");
+            deviceSelector.appendChild(option);
+          });
+          
+          // Set the first device as selected
+          if (deviceSelector.options.length > 1) {
+            deviceSelector.value = deviceSelector.options[1].value;
+            currentDeviceId = deviceSelector.value;
+            document.getElementById("deviceName").textContent = `Plant: ${currentDeviceId}`;
+            loadDeviceData(currentDeviceId);
+          }
+        }
+        document.getElementById("loadingIndicator").style.display = "none";
+      });
+    }
+    
+    // Device selector change event
+    document.getElementById("deviceSelector").addEventListener("change", function() {
+      if (this.value) {
+        currentDeviceId = this.value;
+        document.getElementById("deviceName").textContent = `Plant: ${currentDeviceId}`;
+        loadDeviceData(currentDeviceId);
+      }
+    });
+    
+    // Load data for selected device
+    function loadDeviceData(deviceId) {
+      document.getElementById("loadingIndicator").style.display = "block";
+      
+      const ref = getDeviceRef(deviceId);
+      ref.once("value", (snapshot) => {
+        const data = snapshot.val();
+        if (data) {
+          let latest = null;
+          const entries = [];
+          
+          Object.keys(data).forEach(key => {
+            const entry = data[key];
+            entries.push({
+              timestamp: new Date(entry.timestamp).getTime(),
+              soil_moisture: entry.soil_moisture,
+              light_intensity: entry.light_intensity || 0
+            });
+            
+            if (!latest || entry.timestamp > latest.timestamp) {
+              latest = entry;
+            }
+          });
+          
+          if (latest) {
+            document.getElementById("lastUpdated").textContent = new Date(latest.timestamp).toLocaleString();
+          }
+          
+          // Sort entries by timestamp
+          entries.sort((a, b) => a.timestamp - b.timestamp);
+          
+          // Update charts with retrieved data
+          updateCharts(entries);
+        }
+        document.getElementById("loadingIndicator").style.display = "none";
+      });
+    }
+    
+    // Function to update all charts
+    function updateCharts(entries) {
+      // Process watering intervals
+      const wateringEvents = [];
+      for (let i = 1; i < entries.length; i++) {
+        const current = entries[i];
+        const previous = entries[i - 1];
+        // Detect watering event: significant moisture increase (>10%)
+        if (current.soil_moisture - previous.soil_moisture > 10) {
+          wateringEvents.push({
+            time: current.timestamp,
+            interval: (current.timestamp - previous.timestamp) / (1000 * 60 * 60) // Convert to hours
+          });
+        }
+      }
+      
+      // Update Watering Intervals Chart
+      updateWateringChart(wateringEvents);
+      
+      // Update Moisture Content Chart
+      updateMoistureChart(entries);
+      
+      // Update Light Intensity Chart
+      updateLightChart(entries);
+    }
+    
+    // Update Watering Intervals Chart
+    function updateWateringChart(wateringEvents) {
+      const wateringLabels = wateringEvents.map((event, index) => `Watering ${index + 1}`);
+      const wateringData = wateringEvents.map(event => event.interval);
+      
+      if (wateringChart) {
+        wateringChart.destroy();
+      }
+      
+      const wateringCtx = document.getElementById("wateringChart").getContext('2d');
+      wateringChart = new Chart(wateringCtx, {
+        type: 'bar',
+        data: {
+          labels: wateringLabels,
+          datasets: [{
+            label: 'Watering Interval (Hours)',
+            data: wateringData,
+            backgroundColor: 'rgba(47, 133, 90, 0.6)',
+            borderColor: 'rgba(47, 133, 90, 1)',
+            borderWidth: 1
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            y: {
+              beginAtZero: true,
+              title: {
+                display: true,
+                text: 'Interval (Hours)'
+              }
+            },
+            x: {
+              title: {
+                display: true,
+                text: 'Watering Events'
+              }
+            }
+          },
+          plugins: {
+            legend: {
+              display: true
+            },
+            tooltip: {
+              callbacks: {
+                label: function(context) {
+                  return `${context.parsed.y.toFixed(2)} hours`;
+                }
+              }
+            }
+          }
+        }
+      });
+    }
+    
+    // Update Moisture Content Chart
+    function updateMoistureChart(entries) {
+      const moistureLabels = entries.map(entry => new Date(entry.timestamp).toLocaleString());
+      const moistureData = entries.map(entry => entry.soil_moisture);
+      
+      if (moistureChart) {
+        moistureChart.destroy();
+      }
+      
+      const moistureCtx = document.getElementById("moistureChart").getContext('2d');
+      moistureChart = new Chart(moistureCtx, {
+        type: 'line',
+        data: {
+          labels: moistureLabels,
+          datasets: [{
+            label: 'Soil Moisture (%)',
+            data: moistureData,
+            fill: false,
+            borderColor: 'rgba(49, 130, 206, 1)',
+            backgroundColor: 'rgba(49, 130, 206, 0.2)',
+            tension: 0.1,
+            pointRadius: 3
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            y: {
+              beginAtZero: true,
+              max: 100,
+              title: {
+                display: true,
+                text: 'Moisture (%)'
+              }
+            },
+            x: {
+              title: {
+                display: true,
+                text: 'Time'
+              },
+              ticks: {
+                maxRotation: 45,
+                minRotation: 45
+              }
+            }
+          },
+          plugins: {
+            legend: {
+              display: true
+            }
+          }
+        }
+      });
+    }
+    
+    // Update Light Intensity Chart
+    function updateLightChart(entries) {
+      const lightLabels = entries.map(entry => new Date(entry.timestamp).toLocaleString());
+      const lightData = entries.map(entry => entry.light_intensity || 0);
+      
+      if (lightChart) {
+        lightChart.destroy();
+      }
+      
+      const lightCtx = document.getElementById("lightChart").getContext('2d');
+      lightChart = new Chart(lightCtx, {
+        type: 'line',
+        data: {
+          labels: lightLabels,
+          datasets: [{
+            label: 'Light Intensity (lux)',
+            data: lightData,
+            fill: false,
+            borderColor: 'rgba(236, 201, 75, 1)',
+            backgroundColor: 'rgba(236, 201, 75, 0.2)',
+            tension: 0.1,
+            pointRadius: 3
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            y: {
+              beginAtZero: true,
+              title: {
+                display: true,
+                text: 'Light (lux)'
+              }
+            },
+            x: {
+              title: {
+                display: true,
+                text: 'Time'
+              },
+              ticks: {
+                maxRotation: 45,
+                minRotation: 45
+              }
+            }
+          },
+          plugins: {
+            legend: {
+              display: true
+            }
+          }
+        }
+      });
+    }
+    
+    // Initialize the page
+    window.onload = function() {
+      populateDeviceSelector();
+    };
+  </script>
+</body>
+</html>

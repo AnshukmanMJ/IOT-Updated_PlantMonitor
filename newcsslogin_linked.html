@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="description" content="Smart Plant Monitor - Track and manage your plant's health">
+  <title>🌱 Smart Plant Monitor</title>
+
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+  
+  <!-- Boxicons for login screen -->
+  <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+
+  <!-- Google Fonts - Using Poppins for login -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --primary-color: #2f855a;
+      --secondary-color: #38a169;
+      --gradient-start: #d4fc79;
+      --gradient-end: #96e6a1;
+      --login-bg: #194d33;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      background-size: cover;
+      background-position: center;
+    }
+
+    /* Login Screen Styles */
+    .auth-container {
+      width: 420px;
+      background: var(--login-bg);
+      border: 2px solid rgba(255, 255, 255, 0.2);
+      backdrop-filter: blur(15px);
+      -webkit-backdrop-filter: blur(15px);
+      color: white;
+      border-radius: 16px;
+      padding: 35px 40px;
+      box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+      text-align: center;
+    }
+
+    .auth-container h1 {
+      font-size: 32px;
+      margin-bottom: 30px;
+      color: white;
+      font-weight: 700;
+    }
+
+    .input-box {
+      position: relative;
+      width: 100%;
+      height: 52px;
+      margin: 25px 0;
+    }
+
+    .input-box input {
+      width: 100%;
+      height: 100%;
+      background: rgba(255, 255, 255, 0.1);
+      border: none;
+      outline: none;
+      border: 2px solid rgba(255, 255, 255, 0.2);
+      border-radius: 40px;
+      font-size: 16px;
+      color: white;
+      padding: 20px 45px 20px 25px;
+      transition: all 0.3s ease;
+    }
+
+    .input-box input:focus {
+      border-color: white;
+      box-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
+    }
+
+    .input-box input::placeholder {
+      color: rgba(255, 255, 255, 0.8);
+    }
+
+    .input-box i {
+      position: absolute;
+      right: 20px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 22px;
+      color: white;
+    }
+
+    .remember-forgot {
+      display: flex;
+      justify-content: space-between;
+      font-size: 14.5px;
+      margin: -10px 0 20px;
+      color: white;
+    }
+
+    .remember-forgot label {
+      display: flex;
+      align-items: center;
+      cursor: pointer;
+    }
+
+    .remember-forgot label input {
+      accent-color: var(--primary-color);
+      margin-right: 5px;
+      cursor: pointer;
+    }
+
+    .remember-forgot a {
+      color: white;
+      text-decoration: none;
+      transition: all 0.3s ease;
+    }
+
+    .remember-forgot a:hover {
+      text-decoration: underline;
+      color: #f0f0f0;
+    }
+
+    .btn-group {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+      margin-bottom: 20px;
+    }
+
+    .auth-btn {
+      width: 100%;
+      height: 50px;
+      background: white;
+      border: none;
+      outline: none;
+      border-radius: 40px;
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15);
+      cursor: pointer;
+      font-size: 16px;
+      color: var(--primary-color);
+      font-weight: 600;
+      transition: all 0.3s ease;
+    }
+
+    .auth-btn:hover {
+      background: #f0f0f0;
+      transform: translateY(-3px);
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+    }
+
+    /* Responsive styles */
+    @media (max-width: 768px) {
+      .auth-container {
+        width: 100%;
+        max-width: 360px;
+        padding: 30px 25px;
+      }
+    }
+  </style>
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyBv-b3ftdw08O9tf0gSFWeAyEBB0EJvQLo",
+      authDomain: "iot-project-9d263.firebaseapp.com",
+      databaseURL: "https://iot-project-9d263-default-rtdb.firebaseio.com",
+      projectId: "iot-project-9d263",
+    };
+  
+    firebase.initializeApp(firebaseConfig);
+  </script>
+</head>
+<body>
+  <!-- Authentication Container (Login/Register) -->
+  <div id="authContainer" class="auth-container">
+    <form id="authForm" onsubmit="return false;">
+      <h1>Smart Plant Monitor</h1>
+      <div class="input-box">
+        <input type="email" id="email" placeholder="Email" required>
+        <i class='bx bxs-user'></i>
+      </div>
+      <div class="input-box">
+        <input type="password" id="password" placeholder="Password" required>
+        <i class='bx bxs-lock-alt'></i>
+      </div>
+      <div class="remember-forgot">
+        <label><input type="checkbox" id="rememberMe"> Remember Me</label>
+        <a href="forget_linked.html" id="forgotPassword">Forgot Password?</a>
+      </div>
+      <div class="btn-group">
+        <button type="button" class="auth-btn" onclick="login()" id="loginBtn">Login</button>
+        <button type="button" class="auth-btn" onclick="signup()" id="signupBtn" style="background: transparent; color: white; border: 2px solid white;">Sign Up</button>
+      </div>
+    </form>
+  </div>
+  <script>
+    function login() {
+      const email = document.getElementById("email").value;
+      const password = document.getElementById("password").value;
+      firebase.auth().signInWithEmailAndPassword(email, password)
+        .then((userCredential) => {
+          const user = userCredential.user;
+          const encodedEmail = email.split('@')[0];
+          localStorage.setItem("user_email", encodedEmail);
+          localStorage.setItem("user_uid", user.uid);
+          location.href = "centralized-dashboard_linked.html";
+        })
+        .catch((error) => alert("Login error: " + error.message));
+    }
+    function signup() {
+      const email = document.getElementById("email").value;
+      const password = document.getElementById("password").value;
+      firebase.auth().createUserWithEmailAndPassword(email, password)
+        .then(() => alert("Signed up! You can login now."))
+        .catch((error) => alert("Signup error: " + error.message));
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Plant Monitor - Forgot Password</title>
+    <!-- Firebase SDK -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/9.22.0/firebase-app-compat.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/9.22.0/firebase-auth-compat.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+            --login-bg: #194d33;
+
+        }
+        
+        body {
+            background-color: #b3ef8a;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        
+        .container {
+            background: var(--login-bg);
+            backdrop-filter: blur(10px);
+            width: 100%;
+            max-width: 400px;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        h1 {
+            text-align: center;
+            color: white;
+            margin-bottom: 25px;
+            font-size: 28px;
+        }
+        
+        .subtitle {
+            text-align: center;
+            color: white;
+            margin-bottom: 25px;
+            font-size: 16px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-control {
+            width: 100%;
+            padding: 12px 15px;
+            border: none;
+            border-radius: 50px;
+            background-color: rgba(255, 255, 255, 0.3);
+            color: white;
+            outline: none;
+        }
+        
+        .form-control::placeholder {
+            color: rgba(255, 255, 255, 0.7);
+        }
+        
+        .btn {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 50px;
+            background-color: white;
+            color: #4caf50;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .btn:hover {
+            opacity: 0.9;
+        }
+        
+        .back-link {
+            display: block;
+            text-align: center;
+            margin-top: 15px;
+            color: white;
+            text-decoration: none;
+        }
+        
+        .back-link:hover {
+            text-decoration: underline;
+        }
+        
+        .status-message {
+            margin-top: 15px;
+            padding: 10px;
+            border-radius: 5px;
+            text-align: center;
+            color: white;
+        }
+        
+        .status-error {
+            background-color: rgba(244, 67, 54, 0.7);
+        }
+        
+        .status-success {
+            background-color: rgba(76, 175, 80, 0.7);
+        }
+        
+        .btn-disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Smart Plant Monitor</h1>
+        <p class="subtitle">Reset Your Password</p>
+        
+        <form id="resetPasswordForm">
+            <div class="form-group">
+                <input type="email" class="form-control" id="email" placeholder="Email" required>
+            </div>
+            
+            <button type="submit" class="btn" id="resetBtn">Send Reset Link</button>
+        </form>
+        
+        <div id="statusMessage" class="status-message" style="display: none;"></div>
+        
+        <a href="newcsslogin_linked.html" class="back-link">Back to Login</a>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize Firebase with your config
+            const firebaseConfig = {
+                apiKey: "AIzaSyBv-b3ftdw08O9tf0gSFWeAyEBB0EJvQLo",
+                authDomain: "iot-project-9d263.firebaseapp.com",
+                projectId: "iot-project-9d263",
+                storageBucket: "iot-project-9d263.firebasestorage.app",
+                messagingSenderId: "600169469414",
+                appId: "1:600169469414:web:c796397351100a70ce7227"
+            };
+            
+            // Initialize Firebase
+            firebase.initializeApp(firebaseConfig);
+            
+            // DOM Elements
+            const resetPasswordForm = document.getElementById('resetPasswordForm');
+            const emailInput = document.getElementById('email');
+            const resetBtn = document.getElementById('resetBtn');
+            const statusMessage = document.getElementById('statusMessage');
+            
+            // Handle form submission
+            resetPasswordForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                // Get email value
+                const email = emailInput.value.trim();
+                
+                // Validate email
+                if (!email) {
+                    showStatusMessage('Please enter your email address.', 'error');
+                    return;
+                }
+                
+                // Disable button to prevent multiple submissions
+                resetBtn.disabled = true;
+                resetBtn.classList.add('btn-disabled');
+                resetBtn.innerText = 'Sending...';
+                
+                // Send password reset email
+                firebase.auth().sendPasswordResetEmail(email)
+                    .then(function() {
+                        showStatusMessage('Password reset email sent! Check your inbox.', 'success');
+                        emailInput.value = '';
+                    })
+                    .catch(function(error) {
+                        console.error('Error sending password reset email:', error);
+                        showStatusMessage(error.message || 'Failed to send reset email. Please try again.', 'error');
+                    })
+                    .finally(function() {
+                        // Re-enable button
+                        resetBtn.disabled = false;
+                        resetBtn.classList.remove('btn-disabled');
+                        resetBtn.innerText = 'Send Reset Link';
+                    });
+            });
+            
+            // Function to show status messages
+            function showStatusMessage(message, type) {
+                statusMessage.innerText = message;
+                statusMessage.style.display = 'block';
+                
+                // Remove any existing classes
+                statusMessage.classList.remove('status-error', 'status-success');
+                
+                // Add the appropriate class
+                if (type === 'error') {
+                    statusMessage.classList.add('status-error');
+                } else if (type === 'success') {
+                    statusMessage.classList.add('status-success');
+                }
+                
+                // Auto hide after 5 seconds
+                setTimeout(function() {
+                    statusMessage.style.display = 'none';
+                }, 5000);
+            }
+        });
+    </script>
+</body>
+</html>
